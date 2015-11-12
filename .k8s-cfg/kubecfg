@@ -1,0 +1,44 @@
+#!/bin/bash
+if [[ ! ${dir:-} ]]; then
+    if [[ ${0##*/} == bash || ${0##*/} == sh ]]; then
+        dir=$(readlink -f ${PWD})
+    fi
+    if [[ ${dir##*/} == .k8s-cfg ]]; then
+        dir=${dir%/*}
+    fi
+    . ${dir}/.k8s-cfg/options
+fi
+
+if [[ ! -e ${dir}/.k8s-cfg/options ]]; then
+    echo Unconfigured options [.k8s-cfg/options]
+    exit 3
+fi
+
+. ${dir}/.k8s-cfg/options
+
+function kubecfg
+{
+    if ! [[ -e ${kubeconfig} ]]; then
+        printf "k8s username: ";
+        read -r username
+        printf "${username}'s password: " ;
+        read -sr password
+        export username=${username}
+        export password=${password}
+        ${kubectl} config --kubeconfig=${kubeconfig} set-cluster k8s --server=https://${master}:443 \
+                   --insecure-skip-tls-verify=true
+        ${kubectl} config --kubeconfig=${kubeconfig} set-credentials cluster-admin \
+                   --username=${username} --password=${password}
+        ${kubectl} config --kubeconfig=${kubeconfig} set-context k8s --cluster=k8s --user=cluster-admin
+        ${kubectl} config --kubeconfig=${kubeconfig} use-context k8s
+    fi
+}
+kubecfg
+
+export kubectl=${dir}/bin/kubectl
+export kubeconfig=${dir}/.private/.${master}.k8s-cfg
+alias kubectl="${kubectl} --kubeconfig=${kubeconfig}"
+
+if [[ ${0##*/} == bash || ${0##*/} == sh ]]; then
+    unset mydir dir script me preset kubecfg
+fi
