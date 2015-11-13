@@ -1,0 +1,23 @@
+#!/bin/bash
+function running
+{
+    local tunnel="${1}"
+    ps -eo pid,cmd|grep -vE 'grep|watch'|grep -sEe "${tunnel}"
+}
+
+function do_watch
+{
+    local tunnel="${1}"
+    local command="${@:2}"
+
+    while : ; do
+        if ! running "${tunnel}" ; then
+            ${command}
+            sleep 11;
+        else
+            sleep 1;
+        fi
+    done
+}
+
+do_watch ${@}

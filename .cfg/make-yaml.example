@@ -1,5 +1,6 @@
 #!/bin/bash
-function make-yaml
+
+function make-yaml-stdio
 {
     public=$(base64 -w 0 ~/.ssh/id_${ssh_key_type}.pub)
     private=$(base64 -w 0 ~/.ssh/id_${ssh_key_type})
@@ -7,7 +8,17 @@ function make-yaml
         -e "s,\{repo\}(.*),${k8stestrepo}\\1,g"                 \
         -e "s,authorized-keys:.*,authorized-keys: ${public},g"  \
         -e "s,id-:.*,id-${ssh_key_type}: ${private},g"          \
-        -e "s,id-.pub:.*,id-${ssh_key_type}.pub: ${public},g"   \
-        ${inyaml}
+        -e "s,id-.pub:.*,id-${ssh_key_type}.pub: ${public},g"
+}
+
+function make-yaml-call
+{
+    local inyaml=${1}
+    make-yaml-stdio < ${inyaml}
+}
+
+function make-yaml
+{
+    make-yaml-call ${inyaml}
 }
 

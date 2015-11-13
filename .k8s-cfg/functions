@@ -1,4 +1,5 @@
 #!/bin/bash
+# rename=0 # override in mycfg if renaming the components.
 # set -o errexit
 set -o nounset
 set -o pipefail
@@ -14,7 +15,6 @@ set -o pipefail
 #         /bin     # kubectl or other binaries
 #         /k8s     # yaml configs
 #         /scripts # this script and collections of other helpers
-
 function check
 {
     if [[ ! ${dir:-} ]]; then
@@ -26,63 +26,84 @@ function check
 }
 
 check
-mkdir -p ${dir}/.k8s-cfg  ${dir}/.private
-chmod 700 ${dir} ${dir}/.k8s-cfg ${dir}/.private
 
-if [[ ! -e ${dir}/.k8s-cfg/options ]]; then
-    echo Unconfigured options [.k8s-cfg/options]
+export cfgdir=${dir}/.cfg
+export k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
+export k8scfgbin=$(readlink -f ${k8scfgdir}/../bin)
+
+mkdir -p ${k8scfgdir}  ${dir}/.private
+chmod 700 ${dir} ${k8scfgdir} ${dir}/.private ${cfgdir}
+
+if [[ ! -e ${k8scfgdir}/kubecfg ]]; then
+    echo "Unconfigured options in one of [.k8s-cfg/{kubecfg,options}]"
     exit 3
 fi
 
-. ${dir}/.k8s-cfg/options
+. ${k8scfgdir}/kubecfg
+# set default manipulation # inject secret like rsa pub key
+. ${k8scfgdir}/make-yaml
 
-if ! [[ -e ${kubeconfig} ]]; then
-    printf "k8s username: ";
-    read -r username
-    printf "${username}'s password: " ;
-    read -sr password
-    export username=${username}
-    export password=${password}
-    ${kubectl} config --kubeconfig=${kubeconfig} set-cluster k8s --server=https://${master}:443 \
-               --insecure-skip-tls-verify=true
-    ${kubectl} config --kubeconfig=${kubeconfig} set-credentials cluster-admin \
-               --username=${username} --password=${password}
-    ${kubectl} config --kubeconfig=${kubeconfig} set-context k8s --cluster=k8s --user=cluster-admin
-    ${kubectl} config --kubeconfig=${kubeconfig} use-context k8s
-fi
-
-export kubectl="${kubectl} --kubeconfig=${kubeconfig}"
-if [[ -e ${make_yaml_file} ]]; then
+if [[ -e ${make_yaml_file} || -L ${make_yaml_file} ]]; then
     . ${make_yaml_file}
-fi
-if [[ ! -e ${make_yaml_file} || ! ${make-yaml:-} ]]; then
-    echo "Required function make-yaml is not defined"
-    echo "It's simplest form could be cat of the yaml file."
-    echo "Any function that dumps the yaml on stdout, such as a sed stream edit may also be used."
+else
+    cat <<EOF
+
+Required function make-yaml is not defined It's simplest form could be
+cat of the yaml file.
+
+Any function that dumps the yaml on stdout, such as a sed stream edit
+may also be used.
+
+override the default with options in .cfg/make-yaml, or 
+
+  ln -s ../.k8s-cfg/make-yaml .cfg/make-yaml
+
+EOF
     exit 3
 fi
 
 function start
 {
-    generate
-    ${kubectl} create -f- <<EOF
+    kubectl create -f- <<EOF
 $(make-yaml)
 EOF
-
 }
 
 function stop
 {
-    ${kubectl} delete -f- <<EOF
+    kubectl delete -f- <<EOF
 $(make-yaml)
 EOF
 }
 
+function status-all
+{
+    kubectl get --output=wide node
+    kubectl get --all-namespaces --output=wide rc,pods,svc,ep
+}
+
 function status
 {
-    ${kubectl} get --output=wide node
-    ${kubectl} get --all-namespaces --output=wide rc,pods,svc,ep
+    if (( rename )); then
+        local name=${id}${name}
+    fi
+    kubectl get --output=wide node
+    echo replication controllers
+    kubectl get --output=wide rc         ${name}             --namespace=${namespace}
+    echo pods
+    kubectl get --output=wide po                             --namespace=${namespace}|head -1
+    kubectl get --output=wide po                             --namespace=${namespace}|grep ${name}
+    echo services
+    kubectl get --output=wide svc        ${name}             --namespace=${namespace}
+    echo endpoints
+    kubectl get --output=wide ep         ${name}             --namespace=${namespace}
+    echo secrets
+    kubectl get --output=wide secret     ${name}-secret      --namespace=${namespace}
 }
+
+
+# --namespace=kube-system exec -it k8s-jenkins-ui-qfduo -c k8s-jump -- /bin/bash
+
 
 function generate
 {
@@ -155,6 +176,25 @@ EOF
     git push --set-upstream github master
 }
 
+function describe
+{
+    local namespace=$(make-yaml ${inyaml}|grep namespace:|grep -v '^ *#'|tail -1|cut -f 2 -d :)
+    namespace=${namespace// /}
+    if [[ ${namespace:-} ]]; then
+        kubectl describe --namespace=${namespace} po ${name}
+    else
+        kubectl describe po ${name}
+    fi
+}
+
+function replicas
+{
+    if (( rename )); then
+        local name=${id}${name}
+    fi
+    kubectl scale --replicas=${1} rc/${name} --namespace=${name}
+}
+
 function push-image
 {
     local image=${dir##*/}
@@ -180,9 +220,13 @@ function main
                     ;;
             esac
         done
+        generate
         for arg in ${@}; do
             case ${arg} in
                 --debug|--verbose) # ignore these, don't generate a usage call
+                    ;;
+                --describe)
+                    describe
                     ;;
                 --push-image)
                     push-image
@@ -196,8 +240,28 @@ function main
                 --status)
                     status
                     ;;
+                --status-all)
+                    status-all
+                    ;;
                 --git-config)
                     git-config
+                    ;;
+                --tunnel-start)
+                    tunnel-start
+                    ;;
+                --tunnel-stop)
+                    tunnel-stop
+                    ;;
+                --tunnel-status)
+                    tunnel-status
+                    ;;
+                --replicas=[0-9]*)
+                    c=${arg##*=}
+                    replicas ${c}
+                    ;;
+                --replicas)
+                    printf "\n${0##*/} --replicas requires an number of replicas to scale\n"
+                    usage
                     ;;
                 *)
                     usage
@@ -206,7 +270,24 @@ function main
     else
         usage
     fi
-    exit
+#    exit
 }
 
-. ${dir}/.cfg/usage
+if [[ -e ${k8scfgdir}/usage ]]; then
+    . ${k8scfgdir}/usage
+fi
+
+if [[ -e ${cfgdir}/usage ]]; then
+    . ${cfgdir}/usage
+fi
+
+if [[ -e ${k8scfgdir}/tunnel ]]; then
+    . ${k8scfgdir}/tunnel
+fi
+
+export namespace=$(namespace)
+
+if [[ -e ${cfgdir}/overrides ]]; then
+    . ${cfgdir}/overrides
+fi
+

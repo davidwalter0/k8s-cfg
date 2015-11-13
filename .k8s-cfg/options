@@ -39,6 +39,7 @@ validate make_yaml_file
 validate hubuid
 validate k8srepo
 validate hubrepo
-
-export kubectl=${dir}/bin/kubectl
+export k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
+export k8scfgbin=$(readlink -f ${k8scfgdir}/../bin)
+export kubectlbin=${k8scfgbin}/kubectl
 export kubeconfig=${dir}/.private/.${master}.k8s-cfg

@@ -1,0 +1,57 @@
+#!/bin/bash
+
+function tunnel-name
+{
+    local namespace=$(namespace)
+    local tunnel="ssh-tunnel-${name}.${namespace}.svc.${domain}"
+    echo "${tunnel}"
+}
+
+function tunnel-check
+{
+
+    local tunnel="${1}"
+    # oddly grep was return 141 when -q was used
+    ps -eo pid,cmd|grep -v grep|grep -sEe "${tunnel}"
+}
+
+function tunnel-start
+{
+    trap tunnel-stop INT TERM
+    # keep ssh in the foreground [no -f {fork}]
+    local tunnel=$(tunnel-name)
+    local command="ssh -nNT -L ${port}:${name}.${namespace}.svc.cluster.local:${port} ${os_user}@${master}"
+    if ! tunnel-check ${tunnel} ; then
+        ( exec -a "${tunnel}" /bin/bash "${k8scfgdir}/watch" "${tunnel}" "${command}" ) &
+    fi
+}
+
+function tunnel-stop
+{
+
+    local tunnel=$(tunnel-name)
+    local command="ssh -nNT -L ${port}:${name}.${namespace}.svc.cluster.local:${port} ${os_user}@${master}"
+
+    local text=$(ps -eo pid,args|grep -sEe "${tunnel}.*watch"|grep -vE 'grep')
+    text=${text# *}
+    if [[ ${text:-} ]]; then
+        pid=${text%% *}
+        kill -TERM ${pid}
+        sleep 1
+        kill -KILL ${pid}
+    fi
+    local text=$(ps -eo pid,args|grep -sEe "${command}"|grep -vE 'grep|watch')
+    text=${text# *}
+    if [[ ${text:-} ]]; then
+        pid=${text%% *}
+        kill -TERM ${pid}
+        sleep 1
+        kill -KILL ${pid}
+    fi
+}
+
+function tunnel-status
+{
+    local tunnel=$(tunnel-name)
+    ps -eo pid,rss,vsz,cpu,start_time,cmd|grep -vE grep|grep "${tunnel}"
+}

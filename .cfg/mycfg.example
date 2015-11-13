@@ -15,3 +15,5 @@ export hubuid=davidwalter0
 # default repo name is the subdirectory of the project
 export k8srepo="git@${id}k8s-git-repo:${name}.git"
 export hubrepo="git@github.com:${hubuid}/${name}.git"
+
+export domain=cluster.local

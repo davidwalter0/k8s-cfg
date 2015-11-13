@@ -6,7 +6,6 @@ if [[ ! ${dir:-} ]]; then
     if [[ ${dir##*/} == .k8s-cfg ]]; then
         dir=${dir%/*}
     fi
-    . ${dir}/.k8s-cfg/options
 fi
 
 if [[ ! -e ${dir}/.k8s-cfg/options ]]; then
@@ -15,6 +14,24 @@ if [[ ! -e ${dir}/.k8s-cfg/options ]]; then
 fi
 
 . ${dir}/.k8s-cfg/options
+
+function namespace
+{
+    local namespace=$(grep '^ *namespace:' ${inyaml}|tail -1|make-yaml-stdio|cut -f 2 -d :)
+    namespace=${namespace// /}
+    if [[ ! ${namespace:-} ]]; then
+        namespace=default
+    fi
+    echo ${namespace}
+}
+
+export kubectlbin=${k8scfgbin}/kubectl
+export kubeconfig=${dir}/.private/.${master}.k8s-cfg
+
+function kubectl
+{
+    ${kubectlbin} --kubeconfig=${kubeconfig} ${@}
+}
 
 function kubecfg
 {
@@ -25,19 +42,15 @@ function kubecfg
         read -sr password
         export username=${username}
         export password=${password}
-        ${kubectl} config --kubeconfig=${kubeconfig} set-cluster k8s --server=https://${master}:443 \
-                   --insecure-skip-tls-verify=true
-        ${kubectl} config --kubeconfig=${kubeconfig} set-credentials cluster-admin \
-                   --username=${username} --password=${password}
-        ${kubectl} config --kubeconfig=${kubeconfig} set-context k8s --cluster=k8s --user=cluster-admin
-        ${kubectl} config --kubeconfig=${kubeconfig} use-context k8s
+        kubectl config --kubeconfig=${kubeconfig} set-cluster k8s --server=https://${master}:443 \
+                --insecure-skip-tls-verify=true
+        kubectl config --kubeconfig=${kubeconfig} set-credentials cluster-admin \
+                --username=${username} --password=${password}
+        kubectl config --kubeconfig=${kubeconfig} set-context k8s --cluster=k8s --user=cluster-admin
+        kubectl config --kubeconfig=${kubeconfig} use-context k8s
     fi
 }
 kubecfg
-
-export kubectl=${dir}/bin/kubectl
-export kubeconfig=${dir}/.private/.${master}.k8s-cfg
-alias kubectl="${kubectl} --kubeconfig=${kubeconfig}"
 
 if [[ ${0##*/} == bash || ${0##*/} == sh ]]; then
     unset mydir dir script me preset kubecfg
