@@ -101,9 +101,7 @@ function status
     kubectl get --output=wide secret     ${name}-secret      --namespace=${namespace}
 }
 
-
 # --namespace=kube-system exec -it k8s-jenkins-ui-qfduo -c k8s-jump -- /bin/bash
-
 
 function generate
 {
@@ -180,6 +178,9 @@ function describe
 {
     local namespace=$(make-yaml ${inyaml}|grep namespace:|grep -v '^ *#'|tail -1|cut -f 2 -d :)
     namespace=${namespace// /}
+    if (( rename )) ; then
+        local name=${id}${name}
+    fi
     if [[ ${namespace:-} ]]; then
         kubectl describe --namespace=${namespace} po ${name}
     else
@@ -200,6 +201,7 @@ function push-image
     local image=${dir##*/}
     docker save ${image} > ${image}.tar
     for host in k8s-${id}master-01 k8s-${id}node-0{1..2}; do
+        echo pushing to host ${host}
         ssh ${host} mkdir -p work
         rsync -rlaz --progress --partial ${dir}/${image}.tar ${host}:work/
         ssh -tt ${host} "for file in work/${image}.tar; do echo sudo docker load -i \${file}; sudo docker load -i \${file}; done"
@@ -214,6 +216,9 @@ function main
             case ${arg} in
                 --debug)
                     debug=1
+                    ;;
+                --rename)
+                    rename=1
                     ;;
                 --verbose)
                     verbose=1
