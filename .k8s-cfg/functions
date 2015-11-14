@@ -1,17 +1,11 @@
 #!/bin/bash
 set -o errexit
-set -o functrace
 set -o nounset
 set -o pipefail
-# The next incarnation will use a git repo pulled into the
-# jenkins home
-
-# volumes mapped from git repo
-
 # These scripts assume a directory structure on the target of
 # under the jenkins home of 
 # .../
-#         /.k8s-cfg    # secrets [ until we get k8s secrets + vault ]
+#         /.k8s-cfg    # generated secrets and configure items with text replacement.
 #         /bin     # kubectl or other binaries
 #         /k8s     # yaml configs
 #         /scripts # this script and collections of other helpers
