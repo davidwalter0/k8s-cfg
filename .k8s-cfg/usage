@@ -6,17 +6,28 @@ Example for the raw config [k8s-cfg] with minimal make-yaml function
 in .k8s-cfg.
 
 ${0##*/} [--{start,stop,status}|--debug|--git-config|--push-image|--rename|
-          --tunnel{-start,-stop,-status}|--describe|--replicas=#]
+          --tunnel{-start,-stop,-status}|--describe|--replicas=#|--namespace=...|--name=...]
 
---start, --stop the service named in this directory
-configure the .k8s-cfg directories mycfg with specific overrides.
-modify /etc/hosts if access isn't in DNS.
+--start, --stop, --status for the service named in this directory
 
---status dumps the status of the k8s cluster for all-namespaces.
+It's a prerequisite to configure [soft link] k8s-cfg's .k8s-cfg
+directory and set up the .cfg directory with mycfg with options and
+optionally .cfg/override to modify behaviour.  modify /etc/hosts if
+access isn't in DNS and you want to expose a specific service locally.
+
+--status-all dumps the status of the k8s cluster for all-namespaces.
 
 --debug writes the yaml from the {service}-template.yaml file.
 
 --push-image to hosts in cluster
+
+--git-config -- preconfigure .git/config with repo info.
+
+--namespace=namespace to use for query or insert.
+
+--name=repo / object name to use.
+
+--replicas=# : scale a replication controller
 
 EOF
     exit 3

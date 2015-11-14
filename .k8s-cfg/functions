@@ -227,6 +227,8 @@ function push-image
 
 function main
 {
+    local k8scfgdir=${dir}/.k8s-cfg
+    local cfgdir=${dir}/.cfg
     # local k8scfgdir=${dir}/.k8s-cfg
     # local flags=${k8scfgdir}/flags
     # local init=${k8scfgdir}/init
@@ -237,10 +239,21 @@ function main
     # chmod 700 ${dir} ${k8scfgdir} ${dir}/.private ${cfgdir}
     local command=""
     local count=""
+    if [[ -e ${cfgdir}/usage ]]; then
+        . ${cfgdir}/usage
+    else
+        . ${k8scfgdir}/usage
+    fi
+
     if (( $# )) ; then
         for arg in ${@}; do
             case ${arg} in
                 --debug|--verbose|--name=*|--namespace=*) # ignore these, don't generate a usage call
+                    ;;
+                --name|--namespace) # ignore these, don't generate a usage call
+                    echo "--name and --namespace require arguments --name=..."
+                    usage
+                    exit 3
                     ;;
                 --replicas=[0-9]*)
                     count=${arg##*=}
@@ -249,6 +262,7 @@ function main
                 --replicas)
                     printf "\n${0##*/} --replicas requires an number of replicas to scale\n"
                     usage
+                    exit 3
                     ;;
                 --describe)
                     command=describe
@@ -282,10 +296,12 @@ function main
                     ;;
                 *)
                     usage
+                    exit 3
             esac
         done
     else
         usage
+        exit 3
     fi
 
     if [[ ${command:-} ]]; then
