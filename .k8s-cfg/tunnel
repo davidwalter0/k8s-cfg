@@ -1,8 +1,13 @@
 #!/bin/bash
+set -o errexit
+set -o nounset
+set -o pipefail
 
 function tunnel-name
 {
-    local namespace=$(namespace)
+    local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
+    . ${k8scfgdir}/init
+    # . ${k8scfgdir}/flags
     local tunnel="ssh-tunnel-${name}.${namespace}.svc.${domain}"
     echo "${tunnel}"
 }
@@ -17,9 +22,19 @@ function tunnel-check
 
 function tunnel-start
 {
+    local cfgdir=${dir}/.cfg
+    local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
+    . ${k8scfgdir}/init
+    # . ${cfgdir}/mycfg
+    # . ${k8scfgdir}/flags
+
+    if [[ ! ${port:-} ]]; then
+        printf "tunnel-start no port assignment.\nmaybe this doesn't have a service configured with an external port?\n"
+        exit 3
+    fi
     trap tunnel-stop INT TERM
     # keep ssh in the foreground [no -f {fork}]
-    local tunnel=$(tunnel-name)
+    local tunnel=$(tunnel-name ${namespace})
     local command="ssh -nNT -L ${port}:${name}.${namespace}.svc.cluster.local:${port} ${os_user}@${master}"
     if ! tunnel-check ${tunnel} ; then
         ( exec -a "${tunnel}" /bin/bash "${k8scfgdir}/watch" "${tunnel}" "${command}" ) &
@@ -28,8 +43,16 @@ function tunnel-start
 
 function tunnel-stop
 {
+    local cfgdir=${dir}/.cfg
+    local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
+    . ${k8scfgdir}/init
+    . ${k8scfgdir}/flags
+    if [[ ! ${port:-} ]]; then
+        printf "tunnel-start no port assignment.\nmaybe this doesn't have a service configured with an external port?\n"
+        exit 3
+    fi
 
-    local tunnel=$(tunnel-name)
+    local tunnel=$(tunnel-name ${namespace})
     local command="ssh -nNT -L ${port}:${name}.${namespace}.svc.cluster.local:${port} ${os_user}@${master}"
 
     local text=$(ps -eo pid,args|grep -sEe "${tunnel}.*watch"|grep -vE 'grep')
@@ -53,5 +76,8 @@ function tunnel-stop
 function tunnel-status
 {
     local tunnel=$(tunnel-name)
-    ps -eo pid,rss,vsz,cpu,start_time,cmd|grep -vE grep|grep "${tunnel}"
+    if (( debug )); then
+        echo "ps -eo pid,rss,vsz,cpu,start_time,args|grep -vE grep|grep \"${tunnel}\""
+    fi
+    ps -eo pid,rss,vsz,cpu,start_time,args|grep -vE grep|grep "${tunnel}"
 }

@@ -1,60 +1,63 @@
 #!/bin/bash
-if [[ ! ${dir:-} ]]; then
-    if [[ ${0##*/} == bash || ${0##*/} == sh ]]; then
-        dir=$(readlink -f ${PWD})
-    fi
-    if [[ ${dir##*/} == .k8s-cfg ]]; then
-        dir=${dir%/*}
-    fi
-fi
-
-if [[ ! -e ${dir}/.k8s-cfg/options ]]; then
-    echo Unconfigured options [.k8s-cfg/options]
-    exit 3
-fi
-
-. ${dir}/.k8s-cfg/options
-
-function namespace
-{
-    local namespace=""
-    if [[ ${inyaml:-} && -e ${inyaml} ]]; then
-        local namespace=$(grep '^ *namespace:' ${inyaml}|tail -1|make-yaml-stdio|cut -f 2 -d :)
-        namespace=${namespace// /}
-    fi
-    if [[ ! ${namespace:-} ]]; then
-        namespace=default
-    fi
-    echo ${namespace}
-}
-
-export kubectlbin=${k8scfgbin}/kubectl
-export kubeconfig=${dir}/.private/.${master}.k8s-cfg
-
+#set -o functrace
+#set -x
 function kubectl
 {
-    ${kubectlbin} --kubeconfig=${kubeconfig} ${@}
-}
+    if [[ ! ${dir:-} ]]; then
+        if [[ ${0##*/} == bash || ${0##*/} == sh ]]; then
+            local dir=$(readlink -f ${PWD})
+        fi
+        if [[ ${dir##*/} == .k8s-cfg ]]; then
+            local dir=${dir%/*}
+        fi
+    fi
+    if [[ ! -e ${dir}/.k8s-cfg/init ]]; then
+        echo Unconfigured options [.k8s-cfg/init]
+        exit 3
+    fi
+    # if [[ ! ${K8S_RECURSING:-} ]]; then
+    #     echo not recursing
+    #     exit 3
+    # else
+    #     echo recursing
+    #     exit 3
+    # fi
+    local fd=0
+    local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
+    local k8scfgbin=$(readlink -f ${k8scfgdir}/../bin)/kubectl
+    local cfgdir=${dir}/.cfg
+    . ${k8scfgdir}/init
 
-function kubecfg
-{
-    if ! [[ -e ${kubeconfig} ]]; then
+    if [[ ! ${master:-} ]]; then
+        echo no value set for the master filename
+        exit 3
+    fi
+    if ! [[ -t "$fd" || -p /dev/stdin ]]; then
+        # non-interactive
+        #...
+       echo 'Not configured and we require an interactive terminal' > /dev/fd/2
+       echo 'Re run without a pipeline ... | tail or | head or > redirection. . .' > /dev/fd/2
+       exit 3
+    #else
+        # interactive
+        # ...
+       #        echo interactive
+    fi
+
+    if [[ ! -e ${kubeconfig} ]]; then
+        local username=""
+        local password=""
         printf "k8s username: ";
         read -r username
         printf "${username}'s password: " ;
         read -sr password
-        export username=${username}
-        export password=${password}
-        kubectl config --kubeconfig=${kubeconfig} set-cluster k8s --server=https://${master}:443 \
-                --insecure-skip-tls-verify=true
-        kubectl config --kubeconfig=${kubeconfig} set-credentials cluster-admin \
-                --username=${username} --password=${password}
-        kubectl config --kubeconfig=${kubeconfig} set-context k8s --cluster=k8s --user=cluster-admin
-        kubectl config --kubeconfig=${kubeconfig} use-context k8s
+        ${k8scfgbin} config --kubeconfig=${kubeconfig} set-cluster k8s --server=https://${master}:443 \
+                     --insecure-skip-tls-verify=true
+        ${k8scfgbin} config --kubeconfig=${kubeconfig} set-credentials cluster-admin \
+                     --username=${username} --password=${password}
+        ${k8scfgbin} config --kubeconfig=${kubeconfig} set-context k8s --cluster=k8s --user=cluster-admin
+        ${k8scfgbin} config --kubeconfig=${kubeconfig} use-context k8s
     fi
-}
-kubecfg
 
-if [[ ${0##*/} == bash || ${0##*/} == sh ]]; then
-    unset mydir dir script me preset kubecfg
-fi
+    ${kubectlbin} --kubeconfig=${kubeconfig} ${@}
+}

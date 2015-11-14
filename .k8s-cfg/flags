@@ -1,0 +1,26 @@
+#!/bin/bash
+local prefixed=0
+local debug=0
+local verbose=0
+local namespace=default
+if [[ ${K8S_ARGV:-} ]]; then
+    for arg in ${K8S_ARGV}; do
+        case ${arg} in
+            --debug)
+                debug=1
+                ;;
+            --namespace=*)
+                namespace=${arg##*=}
+                ;;
+            --name=*)
+                name=${arg##*=}
+                ;;
+            --verbose)
+                verbose=1
+                ;;
+            --prefixed)
+                prefixed=1
+                ;;
+        esac
+    done
+fi

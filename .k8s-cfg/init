@@ -1,0 +1,68 @@
+#!/bin/bash
+
+function init
+{
+    local cfgdir=${dir}/.cfg
+    local mycfg=${cfgdir}/mycfg
+
+    if [[ ! -e ${mycfg:-} ]]; then
+        echo "${mycfg} was not found. have you tailored the configuration to your requirements?"
+        exit 3
+    fi
+    . ${mycfg}
+}
+
+if [[ ! ${K8S_RECURSING:-} ]]; then
+    debug=0
+    local K8S_RECURSING=1
+
+    local cfgdir=${dir}/.cfg
+    local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
+    local k8scfgbin=$(readlink -f ${k8scfgdir}/../bin)
+    local kubectlbin=${k8scfgbin}/kubectl
+    local k8sprivatedir=$(readlink -f ${dir})/.private
+
+    . ${cfgdir}/mycfg
+
+    if [[ ! -e ${k8sprivatedir} ]]; then
+        mkdir -p ${k8sprivatedir}
+    fi
+    local kubeconfig=${k8sprivatedir}/.${master}.k8s-cfg
+
+    if [[ -e ${k8scfgdir}/usage ]]; then
+        . ${k8scfgdir}/usage
+    fi
+
+    if [[ -e ${k8scfgdir}/kubecfg ]]; then
+        . ${k8scfgdir}/kubecfg
+    fi
+
+    if [[ -e ${k8scfgdir}/tunnel ]]; then
+        . ${k8scfgdir}/tunnel
+    fi
+
+    if [[ -e ${k8scfgdir}/flags ]]; then
+        . ${k8scfgdir}/flags
+    else
+        echo ${k8scfgdir}/flags not found?
+        exit 3
+    fi
+
+    if [[ -e ${k8scfgdir}/options ]]; then
+        . ${k8scfgdir}/options
+    else
+        echo ${k8scfgdir}/options not found. Is this configured correctly
+        exit 3
+    fi
+
+    if [[ -e ${k8scfgdir}/make-yaml ]]; then
+        . ${k8scfgdir}/make-yaml
+    else
+        echo ${k8scfgdir}/make-yaml not found. Is this configured correctly
+        exit 3
+    fi
+
+    if [[ -e ${cfgdir}/overrides ]]; then
+        . ${cfgdir}/overrides
+    fi
+fi
