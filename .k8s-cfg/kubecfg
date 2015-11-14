@@ -17,8 +17,11 @@ fi
 
 function namespace
 {
-    local namespace=$(grep '^ *namespace:' ${inyaml}|tail -1|make-yaml-stdio|cut -f 2 -d :)
-    namespace=${namespace// /}
+    local namespace=""
+    if [[ ${inyaml:-} && -e ${inyaml} ]]; then
+        local namespace=$(grep '^ *namespace:' ${inyaml}|tail -1|make-yaml-stdio|cut -f 2 -d :)
+        namespace=${namespace// /}
+    fi
     if [[ ! ${namespace:-} ]]; then
         namespace=default
     fi

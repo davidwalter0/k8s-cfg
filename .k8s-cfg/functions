@@ -117,9 +117,24 @@ function generate
 
 function git-config
 {
+    repo=${dir##*/}
+    if (( ! rename )) ; then
+        local id=""
+    fi
+    host=${id}k8s-git-repo
+
     echo
     if [[ -e ${dir}/.git/config ]] && grep remote ${dir}/.git/config ; then
-
+        echo
+        echo "git repo initialization if your prior repo didn't work"
+        echo
+        cat <<EOF
+        ssh ${host}<<INIT
+mkdir ${repo}.git
+cd ${repo}.git
+git init --bare
+INIT
+EOF
         echo There is an existing git config and repo tag.
         echo Remove the remotes or modify them manually.
         echo
@@ -141,9 +156,6 @@ MSG
         usage
         exit 3
     fi
-
-    repo=${dir##*/}
-    host=${id}k8s-git-repo
 
     # .ssh/config entry to enable simple access
 
@@ -219,6 +231,12 @@ function main
                     ;;
                 --rename)
                     rename=1
+                    ;;
+                --rename=*)
+                    rename=${arg##*=}
+                    if (( ${#rename} != 0 )); then
+                        rename=1
+                    fi
                     ;;
                 --verbose)
                     verbose=1
