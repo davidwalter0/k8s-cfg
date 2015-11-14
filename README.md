@@ -81,7 +81,7 @@ can proxy the location or curl to the address
 
 If you need to use json, you might use yaml2json2yaml's
 
-    yaml2json --compress < json > yaml . . .
+    yaml2json --compress < yaml > json . . .
 
 As a preference the current version of the spec is derived from
 k8s-bldr-api v0.1, while the actual path for the api is api/v1 for now
