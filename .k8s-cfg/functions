@@ -48,6 +48,9 @@ function check
 
 function start
 {
+    local k8scfgdir=${dir}/.k8s-cfg
+    . ${k8scfgdir}/init
+    . ${k8scfgdir}/flags
     kubectl create -f- <<EOF
 $(make-yaml)
 EOF
@@ -55,6 +58,9 @@ EOF
 
 function stop
 {
+    local k8scfgdir=${dir}/.k8s-cfg
+    . ${k8scfgdir}/init
+    . ${k8scfgdir}/flags
     kubectl delete -f- <<EOF
 $(make-yaml)
 EOF
