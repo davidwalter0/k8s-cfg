@@ -152,6 +152,7 @@ You can manually fix up your config using options similar to:
 
     git remote add ${repo} ${k8srepo}
     git push --set-upstream ${repo} master
+    git config push.default simple
     git push ${repo} master
 
     git remote add github ${hubrepo}
@@ -185,6 +186,7 @@ git push --set-upstream ${repo} master
 EOF
     git remote add ${repo} ${k8srepo}
     git push --set-upstream ${repo} master
+    git config push.default simple
     git push ${repo} master
 
     git remote add github ${hubrepo}
@@ -268,7 +270,7 @@ function main
                     ;;
                 --replicas=[0-9]*)
                     count=${arg##*=}
-                    command="replicas ${c}"
+                    command="replicas ${count}"
                     ;;
                 --replicas)
                     printf "\n${0##*/} --replicas requires an number of replicas to scale\n"
