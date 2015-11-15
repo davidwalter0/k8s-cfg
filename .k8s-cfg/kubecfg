@@ -45,7 +45,7 @@ function kubectl
         # stdin only
         # if [[ ! -t ${stdin} && ! -p /dev/stdin ]]; then
 
-        if [[ ! -t ${stdin} || ! -t ${stderr} ]] && [[ ! -p /dev/stdin || ! -p /dev/stderr ]]; then
+        if [[ ! -t ${stdin} && ! -t ${stderr} ]] || [[ ! -p /dev/stdin && ! -p /dev/stderr ]]; then
             # Even if filtering stdout, we're printing on stderr, so we can
             # prompt the user on stderr and read stdin.
 
