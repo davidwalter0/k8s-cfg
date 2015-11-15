@@ -18,8 +18,9 @@ if [[ ! ${K8S_RECURSING:-} ]]; then
 
     local cfgdir=${dir}/.cfg
     local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
-    local k8scfgbin=$(readlink -f ${k8scfgdir}/../bin)
-    local kubectlbin=${k8scfgbin}/kubectl
+    local k8scfgbindir=$(readlink -f ${k8scfgdir}/../bin)
+    local kubectlbin=${k8scfgbindir}/kubectl
+    local k8sctlbin=${k8scfgbindir}/kubectl
     local k8sprivatedir=$(readlink -f ${dir})/.private
 
     . ${cfgdir}/mycfg

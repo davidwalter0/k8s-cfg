@@ -22,41 +22,60 @@ function kubectl
     #     echo recursing
     #     exit 3
     # fi
-    local fd=0
+    local stdin=0
+    local stdout=1
+    local stderr=2
     local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
-    local k8scfgbin=$(readlink -f ${k8scfgdir}/../bin)/kubectl
-    local cfgdir=${dir}/.cfg
+    # local cfgdir=${dir}/.cfg
     . ${k8scfgdir}/init
 
     if [[ ! ${master:-} ]]; then
         echo no value set for the master filename
         exit 3
     fi
-    if ! [[ -t "$fd" || -p /dev/stdin ]]; then
-        # non-interactive
-        #...
-       echo 'Not configured and we require an interactive terminal' > /dev/fd/2
-       echo 'Re run without a pipeline ... | tail or | head or > redirection. . .' > /dev/fd/2
-       exit 3
-    #else
-        # interactive
-        # ...
-       #        echo interactive
-    fi
 
     if [[ ! -e ${kubeconfig} ]]; then
+        # if [[ -t "$fd" || -p /dev/stdin ]]; then
+        # echo $([[ -t "${stdin}" || -p /dev/stdin ]]; echo $?)
+        # echo $([[ -t "${stdin}" ]]; echo $?)
+        # echo $([[ -p /dev/stdin ]]; echo $?)
+        # neither stdin nor stdout?
+        # if [[ ! -t ${stdin} || ! -t ${stdout} ]] || [[ ! -p /dev/stdin || ! -p /dev/stdout ]]; then
+        #
+        # stdin only
+        # if [[ ! -t ${stdin} && ! -p /dev/stdin ]]; then
+
+        if [[ ! -t ${stdin} || ! -t ${stderr} ]] && [[ ! -p /dev/stdin || ! -p /dev/stderr ]]; then
+            # Even if filtering stdout, we're printing on stderr, so we can
+            # prompt the user on stderr and read stdin.
+
+            # non-interactive
+
+            # If we haven't initialized the functions, we need a
+            # terminal to get the user/password
+
+            #...
+            echo 'Not configured and we require an interactive terminal' | tee /dev/fd/2
+            echo 'Re run without a pipeline ... | tail or | head or > redirection. . .' | tee /dev/fd/2
+            exit 3
+            #else
+            # interactive
+            # ...
+            #        echo interactive
+        fi
+
         local username=""
         local password=""
-        printf "k8s username: ";
+        printf "k8s username: " > /dev/stderr;
         read -r username
-        printf "${username}'s password: " ;
+        printf "${username}'s password: " > /dev/stderr;
         read -sr password
-        ${k8scfgbin} config --kubeconfig=${kubeconfig} set-cluster k8s --server=https://${master}:443 \
+        ${kubectlbin} config --kubeconfig=${kubeconfig} set-cluster k8s --server=https://${master}:443 \
                      --insecure-skip-tls-verify=true
-        ${k8scfgbin} config --kubeconfig=${kubeconfig} set-credentials cluster-admin \
+        ${kubectlbin} config --kubeconfig=${kubeconfig} set-credentials cluster-admin \
                      --username=${username} --password=${password}
-        ${k8scfgbin} config --kubeconfig=${kubeconfig} set-context k8s --cluster=k8s --user=cluster-admin
-        ${k8scfgbin} config --kubeconfig=${kubeconfig} use-context k8s
+        ${kubectlbin} config --kubeconfig=${kubeconfig} set-context k8s --cluster=k8s --user=cluster-admin
+        ${kubectlbin} config --kubeconfig=${kubeconfig} use-context k8s
     fi
 
     ${kubectlbin} --kubeconfig=${kubeconfig} ${@}

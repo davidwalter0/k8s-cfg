@@ -147,6 +147,17 @@ host ${id}k8s-git-repo
 MSG
         echo
         echo "#############################################"
+cat <<EOF
+You can manually fix up your config using options similar to:
+
+    git remote add ${repo} ${k8srepo}
+    git push --set-upstream ${repo} master
+    git push ${repo} master
+
+    git remote add github ${hubrepo}
+    git push --set-upstream github master
+
+EOF
         usage
         exit 3
     fi
