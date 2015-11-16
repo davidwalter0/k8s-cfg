@@ -70,6 +70,7 @@ function status-all
 {
     local k8scfgdir=${dir}/.k8s-cfg
     . ${k8scfgdir}/init
+    . ${k8scfgdir}/flags
     kubectl get --output=wide node
     kubectl get --all-namespaces --output=wide rc,pods,svc,ep
 }
@@ -120,50 +121,53 @@ function git-config
     . ${k8scfgdir}/init
     . ${k8scfgdir}/flags
 
-    local repo=${dir##*/}
+    local repo=${name}
     local host=${id}k8s-git-repo
 
     echo
     if [[ -e ${dir}/.git/config ]] && grep remote ${dir}/.git/config ; then
-        echo
-        echo "git repo initialization if your prior repo didn't work"
-        echo
         cat <<EOF
-        ssh ${host}<<INIT
+########################################################################
+There is an existing git config and repo tag.
+Remove the remotes or modify them manually.
+
+The following may be useful for git repo initialization if your prior
+repo didn't work.
+
+ssh ${host} <<INIT
 mkdir ${repo}.git
 cd ${repo}.git
 git init --bare
+
 INIT
-EOF
-        echo There is an existing git config and repo tag.
-        echo Remove the remotes or modify them manually.
-        echo
-        cat <<MSG
+
+# .ssh/config option
 # id comes from .k8s-cfg/config
 host ${id}k8s-git-repo
   User                  git
 #  Port                  2222
-# the name I have the k8s service. . .
+#  the name I have the k8s service. . .
 #  Hostname             alternate-name
   IdentitiesOnly        yes
   TCPKeepAlive          yes
   IdentityFile          ~/.ssh/id_ed25519
 # If connecting from non local work laptop for example . . .
 #  ProxyCommand       ssh -XC -A k8s-master-01 -W '%h:%p'
-MSG
-        echo
-        echo "#############################################"
-cat <<EOF
+
+
+
+########################################################################
 You can manually fix up your config using options similar to:
 
-    git remote add ${repo} ${k8srepo}
-    git push --set-upstream ${repo} master
-    git config push.default simple
-    git push ${repo} master
+git remote add ${repo} ${k8srepo}
+git push --set-upstream ${repo} master
+git config push.default simple
+git push ${repo} master
 
-    git remote add github ${hubrepo}
-    git push --set-upstream github master
+# git remote add github ${hubrepo}
+# git push --set-upstream github master
 
+########################################################################
 EOF
         usage
         exit 3
@@ -186,17 +190,17 @@ cd ${repo}.git
 git init --bare
 INIT
 
-    cat <<EOF
+cat <<EOF
 git remote add ${repo} ${k8srepo}
 git push --set-upstream ${repo} master
 EOF
     git remote add ${repo} ${k8srepo}
     git push --set-upstream ${repo} master
     git config push.default simple
-    git push ${repo} master
+#    git push ${repo} master
 
-    git remote add github ${hubrepo}
-    git push --set-upstream github master
+#    git remote add github ${hubrepo}
+#    git push --set-upstream github master
 }
 
 function namespace-command

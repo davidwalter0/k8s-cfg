@@ -45,7 +45,23 @@ function kubectl
         # stdin only
         # if [[ ! -t ${stdin} && ! -p /dev/stdin ]]; then
 
-        if [[ ! -t ${stdin} && ! -t ${stderr} ]] || [[ ! -p /dev/stdin && ! -p /dev/stderr ]]; then
+        if [[ -t ${stdin} && -t ${stderr} ]] || [[ -p /dev/stdin && -p /dev/stderr ]]; then
+            # interactive
+            # ...
+            #        echo interactive
+            local username=""
+            local password=""
+            printf "k8s username: " > /dev/stderr;
+            read -r username
+            printf "${username}'s password: " > /dev/stderr;
+            read -sr password
+            ${kubectlbin} config --kubeconfig=${kubeconfig} set-cluster k8s --server=https://${master}:443 \
+                          --insecure-skip-tls-verify=true
+            ${kubectlbin} config --kubeconfig=${kubeconfig} set-credentials cluster-admin \
+                          --username=${username} --password=${password}
+            ${kubectlbin} config --kubeconfig=${kubeconfig} set-context k8s --cluster=k8s --user=cluster-admin
+            ${kubectlbin} config --kubeconfig=${kubeconfig} use-context k8s
+        else
             # Even if filtering stdout, we're printing on stderr, so we can
             # prompt the user on stderr and read stdin.
 
@@ -58,24 +74,7 @@ function kubectl
             echo 'Not configured and we require an interactive terminal' | tee /dev/fd/2
             echo 'Re run without a pipeline ... | tail or | head or > redirection. . .' | tee /dev/fd/2
             exit 3
-            #else
-            # interactive
-            # ...
-            #        echo interactive
         fi
-
-        local username=""
-        local password=""
-        printf "k8s username: " > /dev/stderr;
-        read -r username
-        printf "${username}'s password: " > /dev/stderr;
-        read -sr password
-        ${kubectlbin} config --kubeconfig=${kubeconfig} set-cluster k8s --server=https://${master}:443 \
-                     --insecure-skip-tls-verify=true
-        ${kubectlbin} config --kubeconfig=${kubeconfig} set-credentials cluster-admin \
-                     --username=${username} --password=${password}
-        ${kubectlbin} config --kubeconfig=${kubeconfig} set-context k8s --cluster=k8s --user=cluster-admin
-        ${kubectlbin} config --kubeconfig=${kubeconfig} use-context k8s
     fi
 
     ${kubectlbin} --kubeconfig=${kubeconfig} ${@}
