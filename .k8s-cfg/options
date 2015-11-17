@@ -11,7 +11,7 @@ function validate
     eval "#!/bin/bash -x
     if [[ \${0} != /bin/bash ]]; then
         if [[ ! \${${valid}:-} ]]; then
-            echo 'required [scripts/configure] option: ${valid} not set';
+            echo 'required [.cfg/mycfg] option: ${valid} not set';
             exit 3;
         fi;
     fi;
@@ -19,15 +19,14 @@ function validate
 "
 }
 
-validate id
-validate ssh_key_type
+# validate id # optional
+validate ssh_key_name
 validate master
 validate os_user
 validate name
 validate namespace
 validate yaml
 validate inyaml
-validate make_yaml_file
 validate hubuid
-validate k8srepo
 validate hubrepo
+validate k8srepo

@@ -1,19 +1,15 @@
 # example configuration.
 # please modify for your requirements
-export id=dw-txs-
-
-export debug=0
-export ssh_key_type=rsa
-export master=k8s-${id}master-01
-export os_user=centos
-export name=${dir##*/}
-export yaml=${dir}/${name}.yaml
-export inyaml=${dir}/${name}-template.yaml
-export make_yaml_file=${dir}/.cfg/make-yaml
-export k8stestrepo=k8s-jenkins-cfg
-export hubuid=davidwalter0
-# default repo name is the subdirectory of the project
-export k8srepo="git@${id}k8s-git-repo:${name}.git"
-export hubrepo="git@github.com:${hubuid}/${name}.git"
-
-export domain=cluster.local
+id=dw-txs-
+ssh_key_name=rsa
+master=k8s-${id}master-01
+os_user=centos
+name=${dir##*/}
+yaml=${dir}/${name}.yaml
+inyaml=${dir}/${name}-template.yaml
+make_yaml_file=${dir}/.cfg/make-yaml
+k8stestrepo=k8s-jenkins-cfg
+hubuid=davidwalter0
+k8srepo="git@${id}k8s-git-repo:${name}.git"
+hubrepo="git@github.com:${hubuid}/${name}.git"
+domain=cluster.local

@@ -87,3 +87,92 @@ As a preference the current version of the spec is derived from
 k8s-bldr-api v0.1, while the actual path for the api is api/v1 for now
 and will remain so, v0.1 up to v0.9 as this is considered alpha
 software.
+
+----
+### defaults / initial configuration
+
+If using a reconfigured name system then the id might be needed.
+For example if the following were used to modify a terraform script
+
+```
+# terraform.tvars.default
+# Complete the required configuration below and copy this file and
+# openstack.sample.tf or openstack-floating.sample.tf to the root directory
+# before running terraform commands
+
+# Configuration variables
+
+auth_url = {}
+tenant_id = {}
+tenant_name = {}
+public_key = {}
+cluster_name = "cluster.local"
+image_name = "CentOS-71"
+master_flavor = "GP2-Large"
+node_flavor = "GP2-Xlarge"
+master_count = "1"
+node_count = "2"
+datacenter = "dc1"
+glusterfs_volume_size = "2"
+short_name = {}
+keypair_name = {}
+
+# If using openstack-floating.sample.tf, set the two variables below
+
+floating_pool = "public-floating-601"
+external_net_id = "8f3508a9-d4f5-4f9c-a5da-fd7f04059303"
+
+# If using openstack.sample.tf, set the following
+net_id = ""
+```
+
+```
+# appended to txsdemopaas to reformat some options
+SHORT_NAME=k8s-dw-txs
+sed -e "s,auth_url *= *{},auth_url = \"${OS_AUTH_URL}\",g" terraform.tfvars.default > terraform.tfvars
+sed -i -e "s,tenant_id *= *{},tenant_id = \"${OS_TENANT_ID}\",g" terraform.tfvars
+sed -i -e "s,tenant_name *= *{},tenant_name = \"${OS_TENANT_NAME}\",g" terraform.tfvars
+sed -i -e "s,short_name = {},short_name = \"${SHORT_NAME}\",g" terraform.tfvars
+sed -i -e "s,keypair_name = {},keypair_name = \"${SHORT_NAME}-keypair\",g" terraform.tfvars
+sed -i -e "s,public_key = {},public_key = \"~/.ssh/id_rsa.pub\",g" terraform.tfvars
+```
+
+Since the default naming of kubernetes-ansible was k8s-{master,node} like,
+
+    k8s-master-[0-1][0-9]
+    k8s-node-[0-1][0-9]
+
+e.g., k8s-master-01, if renaming these for uniqueness, then replace
+the id with a value like dw-txs.
+
+```
+id=""
+ssh_key_name=rsa
+master=k8s-dw-txs-master-01
+os_user=centos
+name=${dir##*/}
+namespace=${name}
+yaml=${dir}/${name}.yaml
+inyaml=${dir}/${name}-template.yaml
+domain=cluster.local
+hubuid=davidwalter0
+k8srepo=git@${id}k8s-git-repo:${name}.git
+hubrepo=git@github.com:${hubuid}/${name}.git
+```
+
+
+```
+id=dw-txs-
+ssh_key_name=rsa
+master=k8s-${id}master-01
+os_user=centos
+name=${dir##*/}
+namespace=${name}
+yaml=${dir}/${name}.yaml
+inyaml=${dir}/${name}-template.yaml
+domain=cluster.local
+hubuid=davidwalter0
+k8srepo=git@${id}k8s-git-repo:${name}.git
+hubrepo=git@github.com:${hubuid}/${name}.git
+```
+

@@ -1,0 +1,11 @@
+id=dw-txs
+ssh_key_name=id_rsa
+master=k8s-${id}master-01
+os_user=centos
+name=k8s-git-repo
+# name=${dir##*/}
+#namespace=${dir##*/}
+namespace=${name}
+yaml=${dir}/${name}.yaml
+inyaml=${name}-template.yaml
+domain=cluster.local

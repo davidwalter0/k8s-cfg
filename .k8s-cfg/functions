@@ -1,5 +1,5 @@
 #!/bin/bash
-set -o errexit
+# set -o errexit
 set -o nounset
 set -o pipefail
 # These scripts assume a directory structure on the target of
@@ -12,11 +12,13 @@ set -o pipefail
 
 function init
 {
+    local k8scfgdir=${dir}/.k8s-cfg
     local cfgdir=${dir}/.cfg
     local mycfg=${cfgdir}/mycfg
 
     if [[ ! -e ${mycfg:-} ]]; then
         echo "${mycfg} was not found. have you tailored the configuration to your requirements?"
+        echo "Try executing ${0} --initialize"
         exit 3
     fi
     . ${mycfg}
@@ -27,9 +29,9 @@ function wrap-command
     local cfgdir=${dir}/.cfg
     local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
     . ${k8scfgdir}/init
-   # . ${k8scfgdir}/flags
-   # . ${k8scfgdir}/mycfg
-   # eval ${@}
+    # . ${k8scfgdir}/flags
+    # . ${k8scfgdir}/mycfg
+    # eval ${@}
     eval ${@}
 }
 
@@ -103,14 +105,9 @@ function generate
     local cfgdir=${dir}/.cfg
     . ${k8scfgdir}/init
     # . ${k8scfgdir}/flags
-    # . ${cfgdir}/mycfg
-
     rm -f ${yaml}
     if (( debug )); then
-        echo "building yaml file ${yaml} for debugging"
-        if [[ ! -e ${yaml} ]]; then
-            (make-yaml > ${yaml} )
-        fi
+        make-yaml > ${yaml}
         chmod 600 ${yaml}
     fi
 }
@@ -119,8 +116,7 @@ function git-config
 {
     local k8scfgdir=${dir}/.k8s-cfg
     . ${k8scfgdir}/init
-    . ${k8scfgdir}/flags
-
+    # . ${k8scfgdir}/flags
     local repo=${name}
     local host=${id}k8s-git-repo
 
@@ -190,17 +186,17 @@ cd ${repo}.git
 git init --bare
 INIT
 
-cat <<EOF
+    cat <<EOF
 git remote add ${repo} ${k8srepo}
 git push --set-upstream ${repo} master
 EOF
     git remote add ${repo} ${k8srepo}
     git push --set-upstream ${repo} master
     git config push.default simple
-#    git push ${repo} master
+    #    git push ${repo} master
 
-#    git remote add github ${hubrepo}
-#    git push --set-upstream github master
+    #    git remote add github ${hubrepo}
+    #    git push --set-upstream github master
 }
 
 function namespace-command
@@ -212,7 +208,7 @@ function namespace-command
     # . ${k8scfgdir}/kubecfg
     # . ${cfgdir}/mycfg
 
-#    local namespace=$(namespace)
+    #    local namespace=$(namespace)
     if [[ ! ${namespace:-} ]]; then
         namespace=default
     fi
@@ -267,11 +263,29 @@ function main
     else
         . ${k8scfgdir}/usage
     fi
-
+    
+    for arg in ${@}; do
+        case ${arg} in
+            --initialize)
+                local k8scfgdir=${dir}/.k8s-cfg
+                local cfgdir=${dir}/.cfg
+                local mycfg=${cfgdir}/mycfg
+                if [[ -e ${k8scfgdir}/initialize ]]; then
+                    . ${k8scfgdir}/initialize
+                else
+                    echo ${k8scfgdir}/initialize not found. Is this configured correctly
+                    exit 3
+                fi
+                INITIALIZE # check and initialize mycfg if not created
+                ;;
+            *)
+                ;;
+        esac
+    done
     if (( $# )) ; then
         for arg in ${@}; do
             case ${arg} in
-                --debug|--verbose|--name=*|--namespace=*) # ignore these, don't generate a usage call
+                --debug|--initialize|--verbose|--name=*|--namespace=*) # ignore these, don't generate a usage call
                     ;;
                 --name|--namespace) # ignore these, don't generate a usage call
                     echo "--name and --namespace require arguments --name=..."
@@ -333,6 +347,5 @@ function main
     fi
 }
 export K8S_ARGV=${@}
-# init
 check
 

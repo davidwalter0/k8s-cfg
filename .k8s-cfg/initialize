@@ -1,0 +1,137 @@
+#!/bin/bash
+
+declare -a ANSWERS=()
+
+function SEARCH
+{
+    find=${1}
+    for line in ${ANSWERS[@]}; do
+        if [[ ${line} =~ ^${find}=(.*) ]]; then
+            eval "echo ${BASH_REMATCH[1]}"
+            return 0
+        fi
+    done
+    return 1
+}
+
+
+function STDIN
+{
+    QUIET=0
+    STDIN=1
+    local stdin=0
+    if [[ ! -t ${stdin} ]] ; then
+        QUIET=1;
+        STDIN=0
+        read line
+        ANSWERS=(${line})
+        while read line; do
+            if [[ ${line} =~ '^ *#.*' ]]; then
+                continue
+            fi
+            ANSWERS=( ${ANSWERS[@]} ${line} );
+        done
+    fi
+}
+    
+function EVALUATE
+{
+    local cfgdir=${dir}/.cfg
+    local cfganswers=${cfgdir}/answersx
+    local defaults=${cfgdir}/defaults
+    local lhs=${1}
+    local default=$(grep -E "^${lhs}=" ${defaults}|cut -f2 -d=)
+    if echo ${default} | grep -q '$' ; then
+        eval "default=${default}"
+    fi
+    local XNAME=${1}
+    if (( ! ${QUIET} )); then
+        printf "%-20s: press enter for the default [%-48s]: " ${XNAME} ${default} > /dev/stderr;
+    fi
+    eval "value=${default}"
+    if (( ${STDIN:-} )); then
+        read -r value
+        if [[ ${value:-} ]]; then
+            if [[ ${XNAME:-} && ${XNAME} == id && -n "${value##*-}" ]]; then
+                value="${value}-"
+            fi
+            eval "${XNAME}=${value}"
+        fi
+    else
+        if temp=$(SEARCH ${XNAME}) ; then
+            value=${temp}
+            if [[ ${XNAME:-} && ${XNAME} == id && -n "${value##*-}" ]]; then
+                value="${value}-"
+            fi
+        fi
+        eval "${XNAME}=${value}"
+    fi
+    case ${XNAME} in
+        namespace)
+            if [[ ${value} == "" ]]; then
+                value=default
+                eval "${XNAME}=${value}"
+            fi
+            ;;
+    esac
+    if (( ! ${QUIET:-} )); then
+        echo ${value}
+    else
+        printf "%-20s: %-48s\n" ${XNAME} ${value}
+    fi
+}
+
+# function ANSWER
+# {
+#     local cfganswers=${2}
+#     local XNAME=${1}
+#     local answer=
+#     if [[ ${cfganswers:-} && -e ${cfganswers} ]]; then
+#         answer=$(grep -E "^${XNAME}=" ${cfganswers}|cut -f2 -d=)
+#     fi
+#     echo ${answer}
+# }
+
+function INITIALIZE
+{
+    if [[ ! ${dir:-} ]]; then
+        echo Variable dir not set. This script is usually called by another k8s-cfg config script.
+        exit 3
+    fi
+    local cfgdir=${dir}/.cfg
+    if [[ ! -e ${cfgdir}/mycfg ]]; then
+        STDIN
+        EVALUATE id
+        EVALUATE ssh_key_name
+        EVALUATE master
+        EVALUATE os_user
+        EVALUATE name
+        EVALUATE namespace
+        EVALUATE yaml
+        EVALUATE inyaml
+        EVALUATE domain
+        EVALUATE hubuid
+        EVALUATE hubrepo
+        EVALUATE k8srepo
+        if [[ ! ${mycfg:-} ]]; then
+            echo Why is this called without a value for mycfg?
+            exit 3
+        fi
+        cat > ${mycfg} <<EOF
+id=${id}
+ssh_key_name=${ssh_key_name}
+master=${master}
+os_user=${os_user}
+name=${name}
+namespace=${namespace}
+yaml=${yaml}
+inyaml=${inyaml}
+domain=${domain}
+hubuid=${hubuid}
+k8srepo=${k8srepo}
+hubrepo=${hubrepo}
+EOF
+    fi
+}
+
+
