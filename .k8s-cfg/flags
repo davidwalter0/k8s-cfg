@@ -15,12 +15,24 @@ if [[ ${K8S_ARGV:-} ]]; then
             --name=*)
                 name=${arg##*=}
                 ;;
+            --id=*)
+                id=${arg##*=}
+                # forced append of - separator if none found
+                if [[ -n "${id##*-}" ]]; then
+                    id="${id}-"
+                fi
+                ;;
             --verbose)
                 verbose=1
                 ;;
             --prefixed)
                 prefixed=1
                 ;;
+            --help)
+                usage
+                exit 0
+                ;;
+
         esac
     done
 fi

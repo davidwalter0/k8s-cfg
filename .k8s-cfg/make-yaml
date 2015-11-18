@@ -4,12 +4,21 @@ function make-yaml-stdio
 {
     local k8scfgdir=${dir}/.k8s-cfg
     local cfgdir=${dir}/.cfg
-    . ${k8scfgdir}/init
-    . ${k8scfgdir}/flags
+    . ${k8scfgdir}/load-configuration
 
-    if (( ! prefixed )); then
-        local id=""
+    . ${k8scfgdir}/flags
+    local nt=${name}
+    local nst=${namespace}
+
+    if [[ ${id:-} ]] ; then
+        # local n=$(echo ${name}|sed -e "s,${id},,g")
+        # local ns=$(echo ${namespace}|sed -e "s,${id},,g")
+        local n=${name//${id}/}
+        local ns=${namespace//${id}/}
+        local name=${n}
+        local namespace=${ns}
     fi
+
     local k8sprivatedir=$(readlink -f ${dir})/.private
     local kubeconfig=${k8sprivatedir}/.${master}.k8s-cfg
 
@@ -19,15 +28,18 @@ function make-yaml-stdio
 
     sed -r                                                                              \
         -e "s,\{repo\}(.*),${k8srepo}\\1,g"                                             \
-        -e "s,app:.*${name}.*,app: ${id}${name},g"                                      \
-        -e "s,namespace:.*${name}.*,namespace: ${namespace},g"                          \
-        -e "s,secretName: *${name}-secret *\$,secretName: ${id}${name}-secret,g"        \
-        -e "s,name: *${name}-secret,name: ${id}${name}-secret,g"                        \
-        -e "s,name: *${name} *\$,name: ${id}${name},g"                                  \
-        -e "s,kubeconfig:.*,kubeconfig: ${kubeconfig},g"                                \
-        -e "s,authorized-keys:.*,authorized-keys: ${public},g"                          \
-        -e "s,id-:.*,${ssh_key_name//_/-}: ${private},g"                                \
-        -e "s,id-.pub:.*,${ssh_key_name//_/-}.pub: ${public},g"
+        -e "s,app: .*${name}.*,app: ${id}${name},g"                                     \
+        -e "s,namespace: .*${name}.*,namespace: ${id}${namespace},g"                    \
+        -e "s,secretName: .*${name}-secret *\$,secretName: ${id}${name}-secret,g"       \
+        -e "s,name: .*${name}-secret,name: ${id}${name}-secret,g"                       \
+        -e "s,name: .*${name} *\$,name: ${id}${name},g"                                 \
+        -e "s,kubeconfig: .*,kubeconfig: ${kubeconfig},g"                               \
+        -e "s,authorized-keys: .*,authorized-keys: ${public},g"                         \
+        -e "s,id-: .*,${ssh_key_name//_/-}: ${private},g"                               \
+        -e "s,id-.pub: .*,${ssh_key_name//_/-}.pub: ${public},g"
+
+    name=${nt}
+    namespace=${nst}
 }
 
 function make-yaml-call

@@ -3,7 +3,7 @@
 function tunnel-name
 {
     local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
-    . ${k8scfgdir}/init
+    . ${k8scfgdir}/load-configuration
     # . ${k8scfgdir}/flags
     local tunnel="ssh-tunnel-${name}.${namespace}.svc.${domain}"
     echo "${tunnel}"
@@ -21,7 +21,7 @@ function tunnel-start
 {
     local cfgdir=${dir}/.cfg
     local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
-    . ${k8scfgdir}/init
+    . ${k8scfgdir}/load-configuration
     # . ${cfgdir}/config
     # . ${k8scfgdir}/flags
 
@@ -42,7 +42,7 @@ function tunnel-stop
 {
     local cfgdir=${dir}/.cfg
     local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
-    . ${k8scfgdir}/init
+    . ${k8scfgdir}/load-configuration
     . ${k8scfgdir}/flags
     if [[ ! ${port:-} ]]; then
         printf "tunnel-start no port assignment.\nmaybe this doesn't have a service configured with an external port?\n"

@@ -15,6 +15,9 @@ function init
 if [[ ! ${K8S_RECURSING:-} ]]; then
     debug=0
     local K8S_RECURSING=1
+    if [[ -e ${k8scfgdir}/kubecfg ]]; then
+        . ${k8scfgdir}/kubecfg
+    fi
 
     local cfgdir=${dir}/.cfg
     local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
@@ -25,6 +28,13 @@ if [[ ! ${K8S_RECURSING:-} ]]; then
 
     . ${cfgdir}/config
 
+    if [[ -e ${k8scfgdir}/flags ]]; then
+        . ${k8scfgdir}/flags
+    else
+        echo ${k8scfgdir}/flags not found?
+        exit 3
+    fi
+
     if [[ ! -e ${k8sprivatedir} ]]; then
         mkdir -p ${k8sprivatedir}
     fi
@@ -34,19 +44,8 @@ if [[ ! ${K8S_RECURSING:-} ]]; then
         . ${k8scfgdir}/usage
     fi
 
-    if [[ -e ${k8scfgdir}/kubecfg ]]; then
-        . ${k8scfgdir}/kubecfg
-    fi
-
     if [[ -e ${k8scfgdir}/tunnel ]]; then
         . ${k8scfgdir}/tunnel
-    fi
-
-    if [[ -e ${k8scfgdir}/flags ]]; then
-        . ${k8scfgdir}/flags
-    else
-        echo ${k8scfgdir}/flags not found?
-        exit 3
     fi
 
     if [[ -e ${k8scfgdir}/options ]]; then

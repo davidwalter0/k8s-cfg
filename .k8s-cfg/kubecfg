@@ -11,8 +11,8 @@ function kubectl
             local dir=${dir%/*}
         fi
     fi
-    if [[ ! -e ${dir}/.k8s-cfg/init ]]; then
-        echo Unconfigured options [.k8s-cfg/init]
+    if [[ ! -e ${dir}/.k8s-cfg/load-configuration ]]; then
+        echo Unconfigured options [.k8s-cfg/load-configuration]
         exit 3
     fi
     # if [[ ! ${K8S_RECURSING:-} ]]; then
@@ -27,7 +27,7 @@ function kubectl
     local stderr=2
     local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
     # local cfgdir=${dir}/.cfg
-    . ${k8scfgdir}/init
+    . ${k8scfgdir}/load-configuration
 
     if [[ ! ${master:-} ]]; then
         echo no value set for the master filename

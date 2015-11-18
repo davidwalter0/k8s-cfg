@@ -2,6 +2,7 @@
 # set -o errexit
 set -o nounset
 set -o pipefail
+export K8S_ARGV=${@}
 # These scripts assume a directory structure on the target of
 # under the jenkins home of 
 # .../
@@ -28,7 +29,7 @@ function wrap-command
 {
     local cfgdir=${dir}/.cfg
     local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
-    . ${k8scfgdir}/init
+    . ${k8scfgdir}/load-configuration
     # . ${k8scfgdir}/flags
     # . ${k8scfgdir}/config
     # eval ${@}
@@ -51,7 +52,7 @@ function check
 function start
 {
     local k8scfgdir=${dir}/.k8s-cfg
-    . ${k8scfgdir}/init
+    . ${k8scfgdir}/load-configuration
     . ${k8scfgdir}/flags
     kubectl create -f- <<EOF
 $(make-yaml)
@@ -61,7 +62,7 @@ EOF
 function stop
 {
     local k8scfgdir=${dir}/.k8s-cfg
-    . ${k8scfgdir}/init
+    . ${k8scfgdir}/load-configuration
     . ${k8scfgdir}/flags
     kubectl delete -f- <<EOF
 $(make-yaml)
@@ -71,7 +72,7 @@ EOF
 function status-all
 {
     local k8scfgdir=${dir}/.k8s-cfg
-    . ${k8scfgdir}/init
+    . ${k8scfgdir}/load-configuration
     . ${k8scfgdir}/flags
     kubectl get --output=wide node
     kubectl get --all-namespaces --output=wide rc,pods,svc,ep
@@ -81,7 +82,7 @@ function status
 {
     local k8scfgdir=${dir}/.k8s-cfg
     local cfgdir=${dir}/.cfg
-    . ${k8scfgdir}/init
+    . ${k8scfgdir}/load-configuration
     echo nodes
     namespace-command kubectl get --output=wide node
     echo replication controllers
@@ -103,7 +104,7 @@ function generate
 {
     local k8scfgdir=${dir}/.k8s-cfg
     local cfgdir=${dir}/.cfg
-    . ${k8scfgdir}/init
+    . ${k8scfgdir}/load-configuration
     if [[ ${yaml:-} && -e ${yaml} && ${template:-} && ! -e ${template} ]] ; then
         if (( debug )); then
             cat > /dev/stderr <<EOF
@@ -150,7 +151,7 @@ EOF
 function git-config
 {
     local k8scfgdir=${dir}/.k8s-cfg
-    . ${k8scfgdir}/init
+    . ${k8scfgdir}/load-configuration
     local repo=${name}
     local host=${id}k8s-git-repo
 
@@ -236,7 +237,7 @@ function namespace-command
 {
     local k8scfgdir=${dir}/.k8s-cfg
     local cfgdir=${dir}/.cfg
-    . ${k8scfgdir}/init
+    . ${k8scfgdir}/load-configuration
     if [[ ! ${namespace:-} ]]; then
         namespace=default
     fi
@@ -260,7 +261,7 @@ function replicas
 function push-image
 {
     local k8scfgdir=${dir}/.k8s-cfg
-    . ${k8scfgdir}/init
+    . ${k8scfgdir}/load-configuration
 
     local image=${dir##*/}
     docker save ${image} > ${image}.tar
@@ -278,8 +279,8 @@ function main
     local cfgdir=${dir}/.cfg
     # local k8scfgdir=${dir}/.k8s-cfg
     # local flags=${k8scfgdir}/flags
-    # local init=${k8scfgdir}/init
-    # . ${k8scfgdir}/init
+    # local init=${k8scfgdir}/load-configuration
+    # . ${k8scfgdir}/load-configuration
     # . ${init}
     # . ${flags}
     # mkdir -p ${k8scfgdir}  ${dir}/.private
@@ -313,10 +314,10 @@ function main
     if (( $# )) ; then
         for arg in ${@}; do
             case ${arg} in
-                --debug|--initialize|--verbose|--name=*|--namespace=*) # ignore these, don't generate a usage call
+                --debug|--initialize|--verbose|--name=*|--namespace=*|--id=*) # ignore these, don't generate a usage call
                     ;;
-                --name|--namespace) # ignore these, don't generate a usage call
-                    echo "--name and --namespace require arguments --name=..."
+                --name|--namespace|--id) # ignore these, don't generate a usage call
+                    echo "--name, --namespace and --id require arguments --name=..."
                     usage
                     exit 3
                     ;;
@@ -374,6 +375,5 @@ function main
         wrap-command ${command}
     fi
 }
-export K8S_ARGV=${@}
 check
 
