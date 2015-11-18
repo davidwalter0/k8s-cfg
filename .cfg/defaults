@@ -1,11 +1,11 @@
 id=""
 ssh_key_name=rsa
-master=k8s-dw-txs-master-01
+master=k8s-master-01
 os_user=centos
 name=${dir##*/}
 namespace=${name}
 yaml=${dir}/${name}.yaml
-inyaml=${dir}/${name}-template.yaml
+template=${dir}/${name}-template.yaml
 domain=cluster.local
 hubuid=davidwalter0
 k8srepo=git@${id}k8s-git-repo:${name}.git

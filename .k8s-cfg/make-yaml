@@ -16,8 +16,9 @@ function make-yaml-stdio
     clustercfg=$(base64 -w 0 ${kubeconfig})
     public=$(base64 -w 0 ~/.ssh/${ssh_key_name}.pub)
     private=$(base64 -w 0 ~/.ssh/${ssh_key_name})
+
     sed -r                                                                              \
-        -e "s,\{repo\}(.*),${k8stestrepo}\\1,g"                                         \
+        -e "s,\{repo\}(.*),${k8srepo}\\1,g"                                             \
         -e "s,app:.*${name}.*,app: ${id}${name},g"                                      \
         -e "s,namespace:.*${name}.*,namespace: ${namespace},g"                          \
         -e "s,secretName: *${name}-secret *\$,secretName: ${id}${name}-secret,g"        \
@@ -31,11 +32,11 @@ function make-yaml-stdio
 
 function make-yaml-call
 {
-    local inyaml=${1}
-    make-yaml-stdio < ${inyaml}
+    local template=${1}
+    make-yaml-stdio < ${template}
 }
 
 function make-yaml
 {
-    make-yaml-call ${inyaml}
+    make-yaml-call ${template}
 }

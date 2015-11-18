@@ -32,10 +32,15 @@ may be used to reduce the output.
 ### make-yaml
 
 Exercise overwrites of names or inject secrets as defined in the
-function call.
+function call, stream editing the yaml text. The text is not written
+to disk unless --debug is specified, so that secrets aren't stored in
+unrestricted locations.
 
-override the default generation of a secret from the *ssh_key_type*
+override the default generation of a secret from the *ssh_key_name*
 variable defined in .cfg/mycfg with other renames or overrides.
+
+Notice the name conversion of **_** to **-** for secrets. Underscores
+weren't allowed as of v1.0x kubernetes which this was tested with.
 
 The default implementation uses make-yaml-stdio as it's driver.
 
@@ -153,7 +158,7 @@ os_user=centos
 name=${dir##*/}
 namespace=${name}
 yaml=${dir}/${name}.yaml
-inyaml=${dir}/${name}-template.yaml
+template=${dir}/${name}-template.yaml
 domain=cluster.local
 hubuid=davidwalter0
 k8srepo=git@${id}k8s-git-repo:${name}.git
@@ -169,7 +174,7 @@ os_user=centos
 name=${dir##*/}
 namespace=${name}
 yaml=${dir}/${name}.yaml
-inyaml=${dir}/${name}-template.yaml
+template=${dir}/${name}-template.yaml
 domain=cluster.local
 hubuid=davidwalter0
 k8srepo=git@${id}k8s-git-repo:${name}.git

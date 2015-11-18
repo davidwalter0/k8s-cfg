@@ -104,11 +104,46 @@ function generate
     local k8scfgdir=${dir}/.k8s-cfg
     local cfgdir=${dir}/.cfg
     . ${k8scfgdir}/init
-    # . ${k8scfgdir}/flags
-    rm -f ${yaml}
+    if [[ ${yaml:-} && -e ${yaml} && ${template:-} && ! -e ${template} ]] ; then
+        if (( debug )); then
+            cat > /dev/stderr <<EOF
+# ************************************************************************"
+# The template file isn't present. 
+#    ${template}
+# However there is a target yaml file:
+#    ${yaml}. 
+#
+# Refusing to remove the target yaml in case you intend to use it to run
+# a kubectl command.
+#
+# Check your configuration.
+# yaml file yaml=${yaml}
+# template file template=${template}
+# Refusing to remove ${yaml} exiting...
+# ************************************************************************"
+EOF
+        fi
+    else
+        # remove cruft if a debug run generated a version of the yaml definition.
+        if [[ ${yaml:-} && -e ${yaml} && ${template:-} && -e ${template} ]] ; then
+            rm -f ${yaml}
+        fi
+    fi
+
     if (( debug )); then
-        make-yaml > ${yaml}
-        chmod 600 ${yaml}
+        if [[ ${template:-} && -e ${template} ]]; then
+            make-yaml > ${yaml}
+            chmod 600 ${yaml}
+        else
+            cat > /dev/stderr <<EOF
+# ************************************************************************"
+# The template file isn't present. 
+#    ${template}
+# Won't create the debug file: 
+#    ${yaml}. 
+# ************************************************************************"
+EOF
+        fi
     fi
 }
 
@@ -116,7 +151,6 @@ function git-config
 {
     local k8scfgdir=${dir}/.k8s-cfg
     . ${k8scfgdir}/init
-    # . ${k8scfgdir}/flags
     local repo=${name}
     local host=${id}k8s-git-repo
 
@@ -194,7 +228,6 @@ EOF
     git push --set-upstream ${repo} master
     git config push.default simple
     #    git push ${repo} master
-
     #    git remote add github ${hubrepo}
     #    git push --set-upstream github master
 }

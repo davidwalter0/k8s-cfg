@@ -108,7 +108,7 @@ function INITIALIZE
         EVALUATE name
         EVALUATE namespace
         EVALUATE yaml
-        EVALUATE inyaml
+        EVALUATE template
         EVALUATE domain
         EVALUATE hubuid
         EVALUATE hubrepo
@@ -126,7 +126,7 @@ os_user=${os_user}
 name=${name}
 namespace=${namespace}
 yaml=${yaml}
-inyaml=${inyaml}
+template=${template}
 domain=${domain}
 hubuid=${hubuid}
 k8srepo=${k8srepo}

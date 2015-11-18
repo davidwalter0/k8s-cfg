@@ -21,11 +21,11 @@ function make-yaml-stdio
 
 function make-yaml-call
 {
-    local inyaml=${1}
-    make-yaml-stdio < ${inyaml}
+    local template=${1}
+    make-yaml-stdio < ${template}
 }
 
 function make-yaml
 {
-    make-yaml-call ${inyaml}
+    make-yaml-call ${template}
 }

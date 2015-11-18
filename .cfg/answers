@@ -7,5 +7,5 @@ name=k8s-git-repo
 #namespace=${dir##*/}
 namespace=${name}
 yaml=${dir}/${name}.yaml
-inyaml=${name}-template.yaml
+template=${name}-template.yaml
 domain=cluster.local

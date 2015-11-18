@@ -26,7 +26,7 @@ validate os_user
 validate name
 validate namespace
 validate yaml
-validate inyaml
+validate template
 validate hubuid
 validate hubrepo
 validate k8srepo
