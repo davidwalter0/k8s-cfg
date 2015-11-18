@@ -66,3 +66,10 @@ if [[ ! ${K8S_RECURSING:-} ]]; then
         . ${cfgdir}/overrides
     fi
 fi
+
+if [[ -e ${k8scfgdir}/flags ]]; then
+    . ${k8scfgdir}/flags
+else
+    echo ${k8scfgdir}/flags not found?
+    exit 3
+fi

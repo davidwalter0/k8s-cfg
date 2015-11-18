@@ -9,6 +9,9 @@ if [[ ${K8S_ARGV:-} ]]; then
             --debug)
                 debug=1
                 ;;
+            --master=*)
+                master=${arg##*=}
+                ;;
             --namespace=*)
                 namespace=${arg##*=}
                 ;;

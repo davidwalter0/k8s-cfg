@@ -30,9 +30,6 @@ function wrap-command
     local cfgdir=${dir}/.cfg
     local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
     . ${k8scfgdir}/load-configuration
-    # . ${k8scfgdir}/flags
-    # . ${k8scfgdir}/config
-    # eval ${@}
     eval ${@}
 }
 
@@ -83,6 +80,7 @@ function status
     local k8scfgdir=${dir}/.k8s-cfg
     local cfgdir=${dir}/.cfg
     . ${k8scfgdir}/load-configuration
+    . ${k8scfgdir}/flags
     echo nodes
     namespace-command kubectl get --output=wide node
     echo replication controllers
@@ -235,9 +233,10 @@ EOF
 
 function namespace-command
 {
-    local k8scfgdir=${dir}/.k8s-cfg
-    local cfgdir=${dir}/.cfg
-    . ${k8scfgdir}/load-configuration
+    # local k8scfgdir=${dir}/.k8s-cfg
+    # local cfgdir=${dir}/.cfg
+    # . ${k8scfgdir}/load-configuration
+
     if [[ ! ${namespace:-} ]]; then
         namespace=default
     fi
@@ -277,14 +276,8 @@ function main
 {
     local k8scfgdir=${dir}/.k8s-cfg
     local cfgdir=${dir}/.cfg
-    # local k8scfgdir=${dir}/.k8s-cfg
-    # local flags=${k8scfgdir}/flags
-    # local init=${k8scfgdir}/load-configuration
-    # . ${k8scfgdir}/load-configuration
-    # . ${init}
-    # . ${flags}
-    # mkdir -p ${k8scfgdir}  ${dir}/.private
-    # chmod 700 ${dir} ${k8scfgdir} ${dir}/.private ${cfgdir}
+    . ${k8scfgdir}/load-configuration
+
     local command=""
     local count=""
     if [[ -e ${cfgdir}/usage ]]; then
@@ -314,9 +307,9 @@ function main
     if (( $# )) ; then
         for arg in ${@}; do
             case ${arg} in
-                --debug|--initialize|--verbose|--name=*|--namespace=*|--id=*) # ignore these, don't generate a usage call
+                --debug|--initialize|--verbose|--master=*|--name=*|--namespace=*|--id=*) # ignore these, don't generate a usage call
                     ;;
-                --name|--namespace|--id) # ignore these, don't generate a usage call
+                --master|--name|--namespace|--id) # ignore these, don't generate a usage call
                     echo "--name, --namespace and --id require arguments --name=..."
                     usage
                     exit 3
