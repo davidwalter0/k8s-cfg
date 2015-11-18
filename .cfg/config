@@ -1,0 +1,13 @@
+id=
+ssh_key_name=id_rsa
+master=k8s-master-01
+os_user=centos
+name=k8s-cfg
+namespace=default
+yaml=${dir}/${name}
+template=${dir}/${name}-template.yaml
+domain=cluster.local
+hubuid=myname
+k8srepo=git@k8s-git-repo:k8s-cfg.git
+hubrepo=git@github.com:davidwalter0/k8s-cfg.git
+buildyaml=

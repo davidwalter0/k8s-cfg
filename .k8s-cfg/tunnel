@@ -22,7 +22,7 @@ function tunnel-start
     local cfgdir=${dir}/.cfg
     local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
     . ${k8scfgdir}/init
-    # . ${cfgdir}/mycfg
+    # . ${cfgdir}/config
     # . ${k8scfgdir}/flags
 
     if [[ ! ${port:-} ]]; then

@@ -14,14 +14,14 @@ function init
 {
     local k8scfgdir=${dir}/.k8s-cfg
     local cfgdir=${dir}/.cfg
-    local mycfg=${cfgdir}/mycfg
+    local config=${cfgdir}/config
 
-    if [[ ! -e ${mycfg:-} ]]; then
-        echo "${mycfg} was not found. have you tailored the configuration to your requirements?"
+    if [[ ! -e ${config:-} ]]; then
+        echo "${config} was not found. have you tailored the configuration to your requirements?"
         echo "Try executing ${0} --initialize"
         exit 3
     fi
-    . ${mycfg}
+    . ${config}
 }
 
 function wrap-command
@@ -30,7 +30,7 @@ function wrap-command
     local k8scfgdir=$(readlink -f ${dir}/.k8s-cfg)
     . ${k8scfgdir}/init
     # . ${k8scfgdir}/flags
-    # . ${k8scfgdir}/mycfg
+    # . ${k8scfgdir}/config
     # eval ${@}
     eval ${@}
 }
@@ -171,8 +171,18 @@ git init --bare
 
 INIT
 
-# .ssh/config option
-# id comes from .k8s-cfg/config
+# .ssh/config entry to enable simple access
+
+# Change port to 22 and comment hostname if using k8s yaml definition.
+# and adding the master [ or host like k8s-master-01 ] to /etc/hosts
+# If accessing remotely via a docker host, maybe mapping -p 2222:22
+# . . .
+
+# You probably want to have either DNS access or /etc/hosts configured
+# for your host and jump host name. In this example k8s-master-01 acts
+# as the jump host to the DNS enabled k8s cluster
+
+# id [${id}] comes from .k8s-cfg/config
 host ${id}k8s-git-repo
   User                  git
 #  Port                  2222
@@ -203,16 +213,6 @@ EOF
         exit 3
     fi
 
-    # .ssh/config entry to enable simple access
-
-    # Change port to 22 and comment hostname if using k8s yaml definition.
-    # and adding the master [ or host like k8s-master-01 ] to /etc/hosts
-    # If accessing remotely via a docker host, maybe mapping -p 2222:22
-    # . . .
-
-    # You probably want to have either DNS access or /etc/hosts configured
-    # for your host and jump host name. In this example k8s-master-01 acts
-    # as the jump host to the DNS enabled k8s cluster
 
     ssh ${host}<<INIT
 mkdir ${repo}.git
@@ -237,11 +237,6 @@ function namespace-command
     local k8scfgdir=${dir}/.k8s-cfg
     local cfgdir=${dir}/.cfg
     . ${k8scfgdir}/init
-    # . ${k8scfgdir}/flags
-    # . ${k8scfgdir}/kubecfg
-    # . ${cfgdir}/mycfg
-
-    #    local namespace=$(namespace)
     if [[ ! ${namespace:-} ]]; then
         namespace=default
     fi
@@ -302,14 +297,14 @@ function main
             --initialize)
                 local k8scfgdir=${dir}/.k8s-cfg
                 local cfgdir=${dir}/.cfg
-                local mycfg=${cfgdir}/mycfg
+                local config=${cfgdir}/config
                 if [[ -e ${k8scfgdir}/initialize ]]; then
                     . ${k8scfgdir}/initialize
                 else
                     echo ${k8scfgdir}/initialize not found. Is this configured correctly
                     exit 3
                 fi
-                INITIALIZE # check and initialize mycfg if not created
+                INITIALIZE # check and initialize config if not created
                 ;;
             *)
                 ;;

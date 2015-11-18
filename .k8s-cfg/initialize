@@ -99,7 +99,7 @@ function INITIALIZE
         exit 3
     fi
     local cfgdir=${dir}/.cfg
-    if [[ ! -e ${cfgdir}/mycfg ]]; then
+    if [[ ! -e ${cfgdir}/config ]]; then
         STDIN
         EVALUATE id
         EVALUATE ssh_key_name
@@ -114,11 +114,11 @@ function INITIALIZE
         EVALUATE hubrepo
         EVALUATE k8srepo
         EVALUATE buildyaml
-        if [[ ! ${mycfg:-} ]]; then
-            echo Why is this called without a value for mycfg?
+        if [[ ! ${config:-} ]]; then
+            echo Why is this called without a value for config?
             exit 3
         fi
-        cat > ${mycfg} <<EOF
+        cat > ${config} <<EOF
 id=${id}
 ssh_key_name=${ssh_key_name}
 master=${master}

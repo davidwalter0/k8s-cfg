@@ -11,7 +11,7 @@ ${0##*/} [--{start,stop,status}|--debug|--git-config|--push-image|--rename|
 --start, --stop, --status for the service named in this directory
 
 It's a prerequisite to configure [soft link] k8s-cfg's .k8s-cfg
-directory and set up the .cfg directory with mycfg with options and
+directory and set up the .cfg directory with config with options and
 optionally .cfg/override to modify behaviour.  modify /etc/hosts if
 access isn't in DNS and you want to expose a specific service locally.
 

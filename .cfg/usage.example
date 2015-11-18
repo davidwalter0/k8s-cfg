@@ -8,7 +8,7 @@ in .k8s-cfg.
 ${0##*/} [--start|--stop|--status|--debug|--git-config|--push-image]
 
 --start, --stop the service named in this directory
-configure the .k8s-cfg directories mycfg with specific overrides.
+configure the .k8s-cfg directories config with specific overrides.
 modify /etc/hosts if access isn't in DNS.
 
 --status dumps the status of the k8s cluster for all-namespaces.

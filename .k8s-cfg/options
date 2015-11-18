@@ -11,7 +11,7 @@ function validate
     eval "#!/bin/bash -x
     if [[ \${0} != /bin/bash ]]; then
         if [[ ! \${${valid}:-} ]]; then
-            echo 'required [.cfg/mycfg] option: ${valid} not set';
+            echo 'required [.cfg/config] option: ${valid} not set';
             exit 3;
         fi;
     fi;

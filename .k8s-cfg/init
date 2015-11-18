@@ -3,13 +3,13 @@
 function init
 {
     local cfgdir=${dir}/.cfg
-    local mycfg=${cfgdir}/mycfg
+    local config=${cfgdir}/config
 
-    if [[ ! -e ${mycfg:-} ]]; then
-        echo "${mycfg} was not found. have you tailored the configuration to your requirements?"
+    if [[ ! -e ${config:-} ]]; then
+        echo "${config} was not found. have you tailored the configuration to your requirements?"
         exit 3
     fi
-    . ${mycfg}
+    . ${config}
 }
 
 if [[ ! ${K8S_RECURSING:-} ]]; then
@@ -23,7 +23,7 @@ if [[ ! ${K8S_RECURSING:-} ]]; then
     local k8sctlbin=${k8scfgbindir}/kubectl
     local k8sprivatedir=$(readlink -f ${dir})/.private
 
-    . ${cfgdir}/mycfg
+    . ${cfgdir}/config
 
     if [[ ! -e ${k8sprivatedir} ]]; then
         mkdir -p ${k8sprivatedir}

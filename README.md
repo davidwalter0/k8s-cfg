@@ -3,7 +3,7 @@
 Simple config and command line interface for working with a k8s
 services or replicas.
 
-Create the files make-yaml usage and mycfg in .cfg/ examples are in
+Create the files make-yaml usage and config in .cfg/ examples are in
 the .cfg directory. 
 
 There is a namespacing make-yaml example to configure renames,
@@ -37,7 +37,7 @@ to disk unless --debug is specified, so that secrets aren't stored in
 unrestricted locations.
 
 override the default generation of a secret from the *ssh_key_name*
-variable defined in .cfg/mycfg with other renames or overrides.
+variable defined in .cfg/config with other renames or overrides.
 
 Notice the name conversion of **_** to **-** for secrets. Underscores
 weren't allowed as of v1.0x kubernetes which this was tested with.
@@ -73,9 +73,9 @@ example.
 ### sharing with another project
 
 cd /path/to/project/ link or copy a version of k8s-cfg scripts to
-.k8s-cfg and update .cfg/{usage,make-yaml,mycfg,overrides}.
+.k8s-cfg and update .cfg/{usage,make-yaml,config,overrides}.
 
-At a minimum .cfg/mycfg is required to point to the clusters address
+At a minimum .cfg/config is required to point to the clusters address
 and naming convention. 
 
     ln -s /path/to/k8s-cfg/.k8s-cfg .k8s-cfg
