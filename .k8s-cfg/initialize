@@ -113,6 +113,7 @@ function INITIALIZE
         EVALUATE hubuid
         EVALUATE hubrepo
         EVALUATE k8srepo
+        EVALUATE buildyaml
         if [[ ! ${mycfg:-} ]]; then
             echo Why is this called without a value for mycfg?
             exit 3
@@ -130,6 +131,7 @@ domain=${domain}
 hubuid=${hubuid}
 k8srepo=${k8srepo}
 hubrepo=${hubrepo}
+buildyaml=${buildyaml}
 EOF
     fi
 }
